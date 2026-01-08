@@ -1,0 +1,27 @@
+[project]
+name = "voice-pacman-server"
+version = "0.1.0"
+description = "FastAPI WebSocket server for voice command detection"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.124.4",
+    "numpy>=1.26.0",
+    "onnxruntime>=1.23.2",
+    "onnxscript>=0.5.6",
+    "uvicorn[standard]>=0.38.0",
+    "websockets>=15.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "datasets[audio]>=4.4.1",
+    "ffmpeg>=1.4",
+    "librosa>=0.11.0",
+    "matplotlib>=3.10.8",
+    "sounddevice>=0.5.3",
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+    "torchcodec>=0.8.1",
+    "wandb>=0.23.1",
+]

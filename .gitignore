@@ -1,0 +1,7 @@
+.venv
+__pycache__
+custom_recordings
+data
+plots
+wandb
+frontend
