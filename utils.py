@@ -25,17 +25,11 @@ class OnnxBackend:
     input_name: str
 
     def predict_proba(self, audio_batch: np.ndarray) -> np.ndarray:
-        # audio_batch: (batch, 1, 16000) float32
         logits = self.session.run(None, {self.input_name: audio_batch})[0]
         return _softmax(logits, axis=1).astype(np.float32, copy=False)
 
 
 def get_inference_backend():
-    """
-    Return an inference backend with a `predict_proba(audio_batch)` method.
-
-    Uses ONNX Runtime only. Raises if `MODEL_PATH` does not exist.
-    """
     global _backend
     if _backend is None:
         with _backend_lock:
@@ -47,9 +41,7 @@ def get_inference_backend():
                         f"Expected it at the project root as '{MODEL_PATH}'."
                     )
 
-                import onnxruntime  # type: ignore
-
-                # CPU-only is typically what you want in containers.
+                import onnxruntime
                 session = onnxruntime.InferenceSession(
                     str(onnx_path),
                     providers=["CPUExecutionProvider"],

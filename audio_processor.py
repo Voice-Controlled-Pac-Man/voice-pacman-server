@@ -10,8 +10,6 @@ from utils import get_inference_backend
 
 
 class AudioStreamProcessor:
-    """Process audio stream from WebSocket and run inference."""
-    
     def __init__(self):
         self.buffer = deque(maxlen=SAMPLE_RATE)
         self.lock = threading.Lock()
@@ -25,7 +23,6 @@ class AudioStreamProcessor:
             self.buffer.extend(audio_data)
     
     def plot_buffer(self):
-        """Plot the current buffer contents."""
         if not DEBUG:
             return
 
@@ -35,9 +32,8 @@ class AudioStreamProcessor:
             
             buffer_array = np.array(list(self.buffer), dtype=np.float32)
 
-        # Lazy imports so production deployments don't require matplotlib.
         try:
-            import matplotlib.pyplot as plt  # type: ignore
+            import matplotlib.pyplot as plt
         except Exception as e:
             print(f"⚠️  Plotting disabled (missing optional deps): {e}")
             return
@@ -73,12 +69,11 @@ class AudioStreamProcessor:
         if len(audio_samples) != SAMPLE_RATE:
             return None
 
-        # Shape: (batch=1, channels=1, samples=16000)
         waveform_batch = audio_samples.astype(np.float32)[None, None, :]
 
         start_time = time.time()
         probabilities = self.backend.predict_proba(waveform_batch)
-        inference_time = (time.time() - start_time) * 1000  # ms
+        inference_time = (time.time() - start_time) * 1000
         
         if DEBUG:
             print(f"⏱️  Inference time: {inference_time:.2f}ms")

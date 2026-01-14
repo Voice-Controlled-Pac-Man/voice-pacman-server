@@ -5,7 +5,7 @@ ACTION_LABELS = ["up", "down", "left", "right"]
 
 SAMPLE_RATE = 16000
 
-INFERENCE_INTERVAL = 0.01  # Run inference every 10ms
-CONFIDENCE_THRESHOLD = 0.95
+INFERENCE_INTERVAL = 0.05
+CONFIDENCE_THRESHOLD = 0.85
 
 MODEL_PATH = "model.onnx"

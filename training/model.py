@@ -25,74 +25,57 @@ class SmartRandomShiftAugumentation(nn.Module):
     def __init__(self, sample_rate=16000, window_size_ms=50, energy_threshold_percentile=10):
         super().__init__()
         self.sr = sample_rate
-        self.window_size = int(window_size_ms * sample_rate / 1000)  # Convert ms to samples
+        self.window_size = int(window_size_ms * sample_rate / 1000)
         self.energy_threshold_percentile = energy_threshold_percentile
 
     def forward(self, waveform):
         if random.random() < 0.7:
             return waveform
 
-        # waveform shape: [batch, channels, samples]
         batch_size, channels, length = waveform.shape
         
-        # Find where voice ends for each sample in the batch
         shifted_waveforms = []
         
         for i in range(batch_size):
-            wav = waveform[i]  # [channels, samples]
+            wav = waveform[i]
             
-            # Average across channels if multiple channels
             if channels > 1:
-                mono_wav = torch.mean(wav, dim=0)  # [samples]
+                mono_wav = torch.mean(wav, dim=0)
             else:
-                mono_wav = wav.squeeze(0)  # [samples]
+                mono_wav = wav.squeeze(0)
             
-            # Calculate RMS energy in sliding windows
-            window_size = min(self.window_size, length // 4)  # Ensure window isn't too large
+            window_size = min(self.window_size, length // 4)
             if window_size < 10:
-                # If waveform is too short, just use original
                 shifted_waveforms.append(wav)
                 continue
             
-            # Calculate RMS energy for each window
             num_windows = length - window_size + 1
             energies = torch.zeros(num_windows, device=wav.device)
             
             for j in range(num_windows):
                 window = mono_wav[j:j + window_size]
-                # RMS energy: sqrt(mean(squared))
                 energies[j] = torch.sqrt(torch.mean(window ** 2))
             
-            # Find voice end: look backwards for where energy drops significantly
-            # Use percentile of energy distribution as threshold
             energy_threshold = torch.quantile(energies, self.energy_threshold_percentile / 100.0)
             
-            # Also consider relative drop from peak energy
             peak_energy = torch.max(energies)
-            relative_threshold = peak_energy * 0.1  # 10% of peak energy
+            relative_threshold = peak_energy * 0.1
             final_threshold = torch.max(energy_threshold, relative_threshold).item()
             
-            # Find last window where energy is above threshold
             voice_end_idx = length - 1
             for idx in range(num_windows - 1, -1, -1):
                 if energies[idx] > final_threshold:
-                    # Voice ends at the end of this window
                     voice_end_idx = idx + window_size - 1
                     break
             
-            # Calculate how much to shift (shift so voice ends closer to the end)
-            # Available space to shift = length - voice_end_idx - 1
             available_shift = length - voice_end_idx - 1
             
             if available_shift > 0:
-                # Shift by a random amount up to available space
                 shift_amount = random.randint(0, available_shift)
                 
-                # Shift to the right: pad zeros on left, remove from right
                 shifted = torch.zeros_like(wav)
                 shifted[:, shift_amount:length] = wav[:, :length - shift_amount]
             else:
-                # No shift needed or possible
                 shifted = wav
             
             shifted_waveforms.append(shifted)
@@ -108,7 +91,7 @@ class PacManCNN(nn.Module):
         )
         self.amplitude_to_db = torchaudio.transforms.AmplitudeToDB()
 
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=(4, 8)) 
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=(4, 8))
         self.pool1 = nn.MaxPool2d(2)
         self.dropout1 = nn.Dropout(0.2)
         

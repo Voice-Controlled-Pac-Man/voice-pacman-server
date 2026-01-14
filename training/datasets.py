@@ -23,8 +23,6 @@ LABELS = {
 }
 
 class PacmanDataset(Dataset):
-    """Dataset for Pacman game."""
-
     def __init__(self, root, url, download, subset, limit=None) -> None:
         self.root = root
         self.url = url
@@ -72,12 +70,10 @@ class PacmanDataset(Dataset):
     
     def __getitem__(self, index):
         waveform, label = self.samples[index]
-        # Pad or truncate to exactly 16000 samples
         if waveform.shape[1] < 16000:
             waveform = torch.nn.functional.pad(waveform, (0, 16000 - waveform.shape[1]))
         elif waveform.shape[1] > 16000:
             waveform = waveform[:, :16000]
-        # Convert label to index
         label_to_idx = {label: idx for idx, label in enumerate(LABELS.keys())}
         label_idx = label_to_idx[label]
         return waveform.clone(), label_idx
@@ -102,5 +98,4 @@ class BackgroundNoiseDataset(Dataset):
         return len(self.samples)
     
     def __getitem__(self, index):
-        # Clone the waveform to ensure it has its own storage
         return random.choice(self.samples).clone()

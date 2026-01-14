@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import asyncio
 import numpy as np
 from pathlib import Path
@@ -11,7 +12,7 @@ app = FastAPI(title="Voice Pacman Server")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,14 +22,6 @@ app.add_middleware(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """
-    WebSocket endpoint for streaming audio and receiving command detections.
-    
-    Protocol:
-    - Client sends: Binary audio chunks (PCM 16-bit, mono, 16kHz)
-    - Server sends: JSON messages with detected commands
-      Format: {"command": "up|down|left|right", "confidence": 0.95, "timestamp": 1234567890.123}
-    """
     await websocket.accept()
     
     processor = AudioStreamProcessor()
@@ -98,17 +91,24 @@ async def run_inference_loop(websocket: WebSocket, processor: AudioStreamProcess
 
 
 async def run_plotting_loop(processor: AudioStreamProcessor):
-    """Plot the audio buffer every second."""
     try:
         while True:
-            await asyncio.sleep(1.0)  # Plot every second
+            await asyncio.sleep(1.0)
             processor.plot_buffer()
     except asyncio.CancelledError:
         pass
     except Exception as e:
         print(f"❌ Error in plotting loop: {e}")
 
-app.mount("/", StaticFiles(directory="frontend/build/client", html=True), name="frontend")
+app.mount("/assets", StaticFiles(directory="frontend/build/client/assets"), name="assets")
+app.mount("/pacman-art", StaticFiles(directory="frontend/build/client/pacman-art"), name="pacman-art")
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    file_path = Path("frontend/build/client") / full_path
+    if file_path.is_file():
+        return FileResponse(file_path)
+    return FileResponse("frontend/build/client/index.html")
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ def train():
     else:
         device = torch.device("cpu")
     print(f"Using device: {device}")
-    device = torch.device("cpu") # for debugging
+    device = torch.device("cpu")
     wandb.config.update({"device": str(device)})
 
     train_dataset = PacmanDataset(
@@ -45,7 +45,6 @@ def train():
         url=DATA_URL, 
         download=True, 
         subset='training',
-        # limit=500,
     )
 
     val_dataset = PacmanDataset(
@@ -53,7 +52,6 @@ def train():
         url=DATA_URL, 
         download=True, 
         subset='validation',
-        # limit=100,
     )
 
     test_dataset = PacmanDataset(
@@ -61,7 +59,6 @@ def train():
         url=DATA_URL, 
         download=True, 
         subset='testing',
-        # limit=100,
     )
 
     background_noise_dataset = BackgroundNoiseDataset(
